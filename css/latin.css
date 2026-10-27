@@ -1,0 +1,115 @@
+/* ============================================================
+   ИГРА «ЛАТЫНЬ» — соединить русское и латинское название
+   ============================================================ */
+
+#latin-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(36, 53, 42, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+#latin-modal.hidden {
+    display: none;
+}
+
+.latin-scroll {
+    background: var(--parchment-light);
+    width: 96vw;
+    max-width: 900px;
+    max-height: 94vh;
+    border: 2px solid var(--gold-deep);
+    box-shadow: var(--shadow-deep);
+    border-radius: 2px;
+    clip-path: var(--torn-edge);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 15px 20px 25px;
+}
+
+#latin-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px 5px;
+}
+
+.latin-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.latin-cell {
+    background: var(--parchment);
+    border: 2px solid var(--gold-deep);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: Georgia, serif;
+    font-size: 15px;
+    color: var(--dark-green, #24352a);
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+}
+
+.latin-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.latin-la {
+    font-style: italic;
+}
+
+.latin-cell.selected {
+    background: #f3e2b3;
+    border-color: var(--gold-deep);
+    box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.45);
+}
+
+.latin-cell.matched {
+    background: #cde8cd;
+    border-color: #3f7d3f;
+    color: #2c5a2c;
+    cursor: default;
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+.latin-cell.shake {
+    animation: latin-shake 0.45s ease;
+    background: #f2c9c4;
+    border-color: #b0413e;
+}
+
+@keyframes latin-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+/* Адаптив для узких экранов */
+@media (max-width: 600px) {
+    .latin-cell {
+        font-size: 13px;
+        padding: 8px 6px;
+    }
+}
