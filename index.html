@@ -39,11 +39,23 @@
       <span style="font-size: 24px; line-height: 1;">🜁</span> Латынь
     </button>
   </div>
+  <div style="display: flex; gap: 6px;">
+    <button id="btn-erudite"
+      style="flex: 1; padding: 10px 4px; font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;">
+      <span style="font-size: 24px; line-height: 1;">🔤</span> Эрудит
+    </button>
+  </div>
 
-  <!-- НОВОЕ: Полевой дневник -->
+  <!-- ПОЛЕВОЙ ДНЕВНИК — научный инструмент исследователя -->
   <button id="btn-journal"
-    style="width: 100%; padding: 10px; margin-top: 4px; font-size: 12px; background: linear-gradient(180deg, var(--green-light), var(--green)); border-color: var(--gold-soft);">
-    📔 Полевой дневник
+    class="journal-menu-btn"
+    title="Научный инструмент: наблюдения с метками на карте, автоопределение видов, статистика и экспорт CSV/GeoJSON">
+    <span class="jmb-icon">📔</span>
+    <span class="jmb-text">
+      <span class="jmb-title">Полевой дневник</span>
+      <span class="jmb-subtitle">научный модуль наблюдений</span>
+    </span>
+    <span class="jmb-badge hidden" id="journal-count-badge">0</span>
   </button>
 </div>
 
@@ -337,15 +349,22 @@
     </div>
   </div>
 
-    <!-- Модалка: Полевой дневник -->
+    <!-- Модалка: Полевой дневник — научный модуль наблюдений -->
     <div id="journal-modal" class="hidden">
       <div class="journal-scroll">
     
       <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
       <div class="journal-titlebar">
-        <h3>📔 Полевой дневник</h3>
+        <h3>📔 Полевой дневник <span class="journal-mode-tag">научный модуль</span></h3>
         <div class="journal-titlebar-actions">
-          <button id="journal-save-btn" title="Сохранить в файл">💾 Сохранить</button>
+          <button id="journal-tab-records" class="jtab active" title="Записи и карта">🗺 Наблюдения</button>
+          <button id="journal-tab-stats" class="jtab" title="Сводка и анализ">📊 Статистика</button>
+          <button id="journal-export-menu-btn" title="Экспорт данных">⬇ Экспорт ▾</button>
+          <div id="journal-export-menu" class="hidden">
+            <button data-format="json">💾 Дневник (.json) — резервная копия</button>
+            <button data-format="csv">📑 Таблица наблюдений (.csv)</button>
+            <button data-format="geojson">🌐 Карта точек (.geojson)</button>
+          </div>
           <button id="journal-load-btn" title="Загрузить из файла">📂 Загрузить</button>
           <button id="journal-close" class="journal-close-btn">✕</button>
       
@@ -354,35 +373,83 @@
         </div>
       </div>
     
-        <!-- КОНТЕНТ -->
-        <div class="journal-content">
+        <!-- ПАНЕЛЬ ИССЛЕДОВАТЕЛЬСКОЙ СТАТИСТИКИ -->
+        <div id="journal-stats-bar" class="journal-stats-bar" title="Ключевые показатели вашей исследовательской работы">
+          <div class="jsb-item"><span class="jsb-num" id="jsb-records">0</span><span class="jsb-label">записей</span></div>
+          <div class="jsb-item"><span class="jsb-num" id="jsb-species">0</span><span class="jsb-label">видов</span></div>
+          <div class="jsb-item"><span class="jsb-num" id="jsb-sites">0</span><span class="jsb-label">точек</span></div>
+          <div class="jsb-item"><span class="jsb-num" id="jsb-verified">0</span><span class="jsb-label">подтв.</span></div>
+          <div class="jsb-item jsb-active"><span class="jsb-num" id="jsb-active-days">0</span><span class="jsb-label">дней полевых работ</span></div>
+        </div>
+    
+        <!-- КОНТЕНТ: вкладка «Наблюдения» -->
+        <div class="journal-content" id="journal-tab-records-panel">
     
         <!-- Левая часть: Карта -->
         <div class="journal-map-wrap">
-          <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
-            <button id="journal-add-pin-btn"
-              style="padding: 8px 16px; font-family: 'Georgia', serif; font-size: 14px; cursor: pointer; background: var(--gold-soft); border: 1px solid var(--gold-deep); border-radius: 2px; color: var(--dark-green); font-weight: bold; transition: all 0.2s;">
-              📍 Поставить метку
-            </button>
-            <!-- Кнопка "Сохранить все точки" -->
-            <button id="journal-finish-pins-btn" class="hidden"
-              style="padding: 8px 16px; font-family: 'Georgia', serif; font-size: 14px; cursor: pointer; background: var(--red-dark); border: 1px solid #521414; border-radius: 2px; color: #fff; font-weight: bold; transition: all 0.2s;">
-              📝 Описать вид
-            </button>
+          <div class="journal-toolbar">
+            <button id="journal-add-pin-btn">📍 Поставить метку</button>
+            <!-- Кнопка "Описать все точки" -->
+            <button id="journal-finish-pins-btn" class="hidden">📝 Описать вид</button>
+            <span class="journal-toolbar-spacer"></span>
+            <label class="journal-filter-label" title="Фильтр записей">🔎
+              <select id="journal-filter">
+                <option value="all">Все записи</option>
+                <option value="verified">✓ Подтверждённые</option>
+                <option value="unverified">? Требуют проверки</option>
+                <option value="withphotos">📷 С фотографиями</option>
+              </select>
+            </label>
+            <select id="journal-sort" title="Сортировка">
+              <option value="new">Сначала новые</option>
+              <option value="old">Сначала старые</option>
+              <option value="name">По названию А→Я</option>
+            </select>
           </div>
           <div id="journal-map-container">
             <img id="journal-map-img" src="img/map3.png" alt="Карта для дневника" draggable="false">
             <div id="journal-markers-layer"></div>
+            <div class="journal-map-legend">
+              <span><i class="jml-dot jml-verified"></i> подтверждено</span>
+              <span><i class="jml-dot jml-unverified"></i> требует проверки</span>
+              <span><i class="jml-dot jml-pending"></i> новая метка</span>
+            </div>
           </div>
         </div>
     
           <!-- Правая часть: Список записей -->
           <div class="journal-sidebar">
+            <div class="journal-list-head">
+              <span id="journal-list-count">0 записей</span>
+              <span class="journal-list-hint">клик по карточке — развернуть и подсветить метки</span>
+            </div>
             <div class="journal-list" id="journal-list">
               <div class="journal-empty">Пока нет записей. Поставьте метку на карте.</div>
             </div>
           </div>
     
+        </div>
+
+        <!-- Вкладка «Статистика» -->
+        <div class="journal-content journal-stats-panel hidden" id="journal-tab-stats-panel">
+          <div class="jstats-grid">
+            <div class="jstats-card">
+              <h4>🦅 Топ наблюдаемых видов</h4>
+              <ol id="journal-top-species" class="jstats-list"></ol>
+            </div>
+            <div class="jstats-card">
+              <h4>📅 Активность по месяцам</h4>
+              <div id="journal-month-chart" class="jstats-chart"></div>
+            </div>
+            <div class="jstats-card">
+              <h4>🛡 Категории редкости наблюдений</h4>
+              <div id="journal-status-chart" class="jstats-chart"></div>
+            </div>
+            <div class="jstats-card">
+              <h4>✅ Качество протоколирования</h4>
+              <ul id="journal-quality-list" class="jstats-list"></ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -390,22 +457,69 @@
   
   <!-- Модалка: Форма добавления записи в дневник -->
   <div id="journal-form-modal" class="hidden">
-    <div class="modal-content">
-      <h3>Новое наблюдение</h3>
-  
-      <label>Предположительное название:
-        <input type="text" id="journal-species-name" placeholder="Начните вводить название...">
+    <div class="modal-content journal-form-wide">
+      <h3 id="journal-form-title">Новое наблюдение</h3>
+
+      <label>Предположительное название вида:
+        <input type="text" id="journal-species-name" placeholder="Начните вводить название..." autocomplete="off" list="journal-species-suggestions">
+      </label>
+      <datalist id="journal-species-suggestions"></datalist>
+      <div id="journal-match-info" class="journal-match-info hidden"></div>
+
+      <div class="journal-form-row">
+        <label>Дата наблюдения:
+          <input type="date" id="journal-date">
+        </label>
+        <label>Кол-во особей:
+          <input type="number" id="journal-count" min="1" step="1" placeholder="—">
+        </label>
+      </div>
+
+      <div class="journal-form-row">
+        <label>Тип встречи:
+          <select id="journal-encounter">
+            <option value="">— не указан —</option>
+            <option value="встреча">визуальная встреча</option>
+            <option value="следы">следы жизнедеятельности</option>
+            <option value="помёт">помёт</option>
+            <option value="гнездо">гнездо / нора / логово</option>
+            <option value="экскременты">остатки (линька, панцирь и т.п.)</option>
+            <option value="голос">голос / пение</option>
+            <option value="труп">гиблая особь</option>
+          </select>
+        </label>
+        <label>Биотоп:
+          <select id="journal-biotope">
+            <option value="">— не указан —</option>
+            <option value="смешанный лес">смешанный лес</option>
+            <option value="сосновый бор">сосновый бор</option>
+            <option value="берёзовая колка">берёзовая колка</option>
+            <option value="луговина">луг / луговина</option>
+            <option value="болото">болото</option>
+            <option value="берег реки">берег реки</option>
+            <option value="озеро">озеро / пруд</option>
+            <option value="пойма">пойма</option>
+            <option value="поле">поле / залежь</option>
+            <option value="населённый пункт">населённый пункт</option>
+            <option value="другое">другое</option>
+          </select>
+        </label>
+      </div>
+
+      <label>Заметки (местонахождение, погода, поведение, координаты GPS…):
+        <textarea id="journal-comment" rows="3" placeholder="Где и когда вы это видели? Что делали, чем подтверждаете определение?"></textarea>
       </label>
   
-      <label>Комментарий:
-        <textarea id="journal-comment" rows="3" placeholder="Где и когда вы это видели?"></textarea>
-      </label>
-  
-      <label>Прикрепить фото (можно несколько):
+      <label>Прикрепить фото доказательства (можно несколько):
         <input type="file" id="journal-photo-input" accept="image/*" multiple>
       </label>
   
       <div id="journal-photo-preview" class="journal-photo-preview"></div>
+
+      <label class="journal-verify-label">
+        <input type="checkbox" id="journal-verified">
+        ✓ Запись проверена и подтверждена (определитель уверен в виде)
+      </label>
   
       <div class="modal-actions">
         <!-- Кнопка "Отмена" на самом деле будет работать как "Пропустить", если меток много -->
@@ -590,15 +704,65 @@
     </div>
   </div>
 
+  <!-- Модалка: Эрудит -->
+  <div id="erudite-modal" class="hidden">
+    <div class="erudite-scroll">
+      <div class="quiz-top-controls">
+        <button id="erudite-restart-btn" title="Начать заново">↺</button>
+        <button id="erudite-close" title="Закрыть">✕</button>
+      </div>
+      <div class="quiz-header">
+        <h2>Эрудит</h2>
+        <div class="quiz-stats">
+          <span class="stat-right">Очки: <strong id="erudite-score">0</strong></span>
+          <span class="stat-right">🪙 Банк: <strong id="erudite-balance">10</strong></span>
+          <span class="stat-streak" id="erudite-streak-block">🔥 Серия: <strong id="erudite-streak">0</strong></span>
+        </div>
+        <div class="quiz-progress">Раунд <strong id="erudite-round">1</strong> из <span id="erudite-total">10</span></div>
+      </div>
+
+      <div class="erudite-body">
+        <div class="erudite-img-wrap">
+          <img id="erudite-img" src="" alt="Описание скрыто — угадай вид!">
+        </div>
+
+        <div id="erudite-slots" class="erudite-slots"></div>
+        <div id="erudite-tray" class="erudite-tray"></div>
+
+        <div class="erudite-controls">
+          <button id="erudite-backspace" class="erudite-ctrl-btn" title="Убрать последнюю букву (Backspace)">⌫</button>
+          <button id="erudite-skip" class="erudite-ctrl-btn erudite-skip-btn" title="Пропустить слово">⏭ Пропустить</button>
+        </div>
+
+        <div id="erudite-hints" class="erudite-hints"></div>
+
+        <div id="erudite-hint" class="erudite-message"></div>
+      </div>
+
+      <div id="erudite-end-screen" class="hidden"
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(240, 230, 207, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20;">
+        <h2 id="erudite-end-title" style="color:var(--dark-green); font-family:Georgia; font-size: 28px; margin-bottom: 10px;"></h2>
+        <p id="erudite-end-achieve"
+          style="font-family:Georgia; font-size: 16px; color: var(--gold-deep); font-weight: bold; margin-bottom: 15px;"></p>
+        <p style="margin: 5px 0; font-family:Georgia; font-size: 16px;">Собрано слов: <strong id="erudite-final-solved">0</strong> из <strong id="erudite-final-total">10</strong></p>
+        <p style="margin: 5px 0; font-family:Georgia; font-size: 16px;">Лучшая серия: <strong id="erudite-final-streak">0</strong></p>
+        <p style="margin: 5px 0; font-family:Georgia; font-size: 16px;">Итоговые очки: <strong id="erudite-final-score">0</strong></p>
+        <button id="erudite-restart" class="quiz-next-btn" style="margin-top:15px; padding: 10px 25px; font-size: 15px;">Играть снова</button>
+      </div>
+    </div>
+  </div>
+
   <link rel="stylesheet" href="css/quiz.css">
   <link rel="stylesheet" href="css/match.css">
   <link rel="stylesheet" href="css/memo.css">
   <link rel="stylesheet" href="css/latin.css">
+  <link rel="stylesheet" href="css/erudite.css">
   
   <script src="js/quiz.js"></script>
   <script src="js/match.js"></script>
   <script src="js/memo.js"></script>
   <script src="js/latin.js"></script>
+  <script src="js/erudite.js"></script>
   <script src="js/journal.js"></script>
   <script src="js/species.js"></script>
   <script src="js/species-data.js"></script>
